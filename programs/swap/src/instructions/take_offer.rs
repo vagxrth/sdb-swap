@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::{spl_associated_token_account::tools::account, AssociatedToken}, token_interface::{ transfer_checked, close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked }};
+use anchor_spl::{associated_token::AssociatedToken, token_interface::{ transfer_checked, close_account, CloseAccount, Mint, TokenAccount, TokenInterface, TransferChecked }};
 
 use crate::Offer ;
 
@@ -84,7 +84,7 @@ pub fn send_tokens_to_maker(ctx: &Context<TakeOffer>, ) -> Result<()> {
 pub fn withdraw_and_close_vault(ctx: Context<TakeOffer>) -> Result<()> {
     let seeds = &[
         b"offer",
-        ctx.accounts.maker.to_account_info().key().as_ref(),
+        ctx.accounts.maker.to_account_info().key.as_ref(),
         &ctx.accounts.offer.id.to_le_bytes()[..],
         &[ctx.accounts.offer.bump]
     ];
@@ -100,7 +100,7 @@ pub fn withdraw_and_close_vault(ctx: Context<TakeOffer>) -> Result<()> {
 
     let cpi_context = CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), accounts, &signer_seeds);
 
-    transfer_checked(cpi_context, ctx.accounts.vault.amount, ctx.accounts.token_mint_a.decimals);
+    transfer_checked(cpi_context, ctx.accounts.vault.amount, ctx.accounts.token_mint_a.decimals)?;
 
     let accounts = CloseAccount{
         account: ctx.accounts.vault.to_account_info(),
