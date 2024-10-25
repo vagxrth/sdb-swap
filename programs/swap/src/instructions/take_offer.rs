@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, token_interface::{ Mint, TokenAccount, TokenInterface }};
 
-use crate::{Offer, ANCHOR_DISCRIMINATOR};
+use crate::Offer ;
 
-use super::transfer_tokens;
+use super::{transfer_tokens, MakeOffer};
 
 #[derive(Accounts)]
 pub struct TakeOffer<'info> {
@@ -52,5 +52,31 @@ pub struct TakeOffer<'info> {
         seeds = [b"offer", maker.key().as_ref(), offer.id.to_le_bytes().as_ref()],
         bump = offer.bump
     )]
-    offer: Account<'info, Offer>
+    offer: Account<'info, Offer>,
+
+    #[account(
+        mut,
+        associated_token::mint = token_mint_a,
+        associated_token::authority = offer,
+        associated_token::token_program = token_program
+    )]
+    vault: InterfaceAccount<'info, TokenAccount>,
+
+    pub system_program: Program<'info, System>,
+
+    pub token_program: Interface<'info, TokenInterface>,
+
+    pub associated_token_program: Program<'info, AssociatedToken>
+}
+
+
+pub fn send_tokens_to_maker(ctx: &Context<TakeOffer>, ) -> Result<()> {
+    transfer_tokens(
+        &ctx.accounts.taker_token_account_b,
+        &ctx.accounts.maker_token_account_b,
+        &ctx.accounts.offer.token_b_wanted_amount,
+        &ctx.accounts.token_mint_b,
+        &ctx.accounts.taker,
+        &ctx.accounts.token_program
+    )
 }
